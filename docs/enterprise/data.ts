@@ -1,7 +1,7 @@
+import { IData } from "@change/atlas";
 
 
-
-export const right = {
+export const right: IData = {
   type: 'root',
   text: '宝鸡有一群怀揣着梦想的少年相信在牛大叔的带领下会创造生命的奇迹网络科技有限公司',
   children: [
@@ -47,7 +47,7 @@ export const right = {
   ]
 }
 
-export const left = {
+export const left: IData = {
   type: 'root',
   text: '宝鸡有一群怀揣着梦想的少年相信在牛大叔的带领下会创造生命的奇迹网络科技有限公司',
   children: [
@@ -126,7 +126,7 @@ export const left = {
   ]
 }
 
-export const persion_niu = [
+export const persion_niu: IData[] = [
   {
     type: 'label',
     text: '同为受益所有人企业',
@@ -163,7 +163,7 @@ export const persion_niu = [
   }
 ]
 
-export const presion_guo = [
+export const presion_guo: IData[] = [
   {
     type: 'label',
     text: '同为受益所有人企业',
@@ -185,7 +185,7 @@ export const presion_guo = [
   }
 ]
 
-export const ent = [
+export const ent: IData[] = [
   {
     type: 'label',
     text: '法定代表人',

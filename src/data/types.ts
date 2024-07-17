@@ -1,0 +1,54 @@
+import type { Selection } from 'd3';
+
+export interface IDesc {
+  fill?: string,
+  text?: string,
+  title?: string,
+}
+
+interface Tag {
+  fill?: string,
+  text?: string
+}
+
+
+export interface IAttributes {
+  width: number,
+  height: number,
+  x: number,
+  y: number,
+  expandable?: boolean,
+}
+
+export interface FormatOptions<T> {
+  father?: IFillData<T>,
+  index?: number,
+  level?: number,
+  attrs: T
+}
+
+export interface IData<T = any> {
+  type: 'root' | 'label' | 'text',
+  text?: string,
+  desc?: string | string[] | IDesc | IDesc[],
+  expandable?: boolean,
+  children?: IData<T>[],
+  fill?: string,
+  tags?: (string | Tag)[],
+  extData?: T,
+}
+
+
+
+export interface IFillData<T = IAttributes, P = any> extends IData<P> {
+  __id: string,
+  __attrs: T,
+  __father?: IFillData<T>,
+  __index?: number,
+  __brother?: IFillData<T>[],
+  __node?: Selection<SVGGElement, unknown, HTMLElement, any>,
+  __line?: Selection<SVGPathElement, unknown, HTMLElement, any>,
+  __level?: number,
+  __children?: IFillData<T>[],
+  children?: IFillData<T>[],
+}

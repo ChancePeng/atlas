@@ -4,14 +4,26 @@
     "declaration": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "target": "ES2015",
     "jsx": "react",
     "baseUrl": "./",
     "paths": {
-      "@@/*": [".dumi/tmp/*"],
-      "@change/atlas": ["src"],
-      "@change/atlas/*": ["src/*", "*"]
+      "@/*": [
+        "src/*"
+      ],
+      "@@/*": [
+        ".dumi/tmp/*"
+      ],
+      "@change/atlas": [
+        "src"
+      ],
+      "@change/atlas/*": [
+        "src/*",
+        "*"
+      ]
     }
   },
-  "include": [".dumirc.ts", "src/**/*"]
+  "include": [
+    ".dumirc.ts",
+    "src/**/*"
+  ]
 }

@@ -1,55 +1,38 @@
+import ChartBase from '../base';
+import format from './format';
 
-import * as d3 from 'd3'
-import { getFillData } from './utils';
-import type { IData, IFillData, IDesc, Position, IEvent } from './types';
+import type { Position, Attributes } from './types';
+import type { IData, IFillData, IDesc } from '../../data';
 import type { Selection } from 'd3';
+import type { IEvent } from '../types';
 
-class Enterprise {
-  #data: {
-    left?: IFillData,
-    right?: IFillData,
+
+type FillData = IFillData<Attributes>
+
+class Enterprise extends ChartBase {
+  private data: {
+    left?: FillData,
+    right?: FillData,
   };
-  #root: Selection<SVGGElement, unknown, HTMLElement, any>;
-  #event: IEvent;
-  #svg: Selection<SVGSVGElement, unknown, HTMLElement, any>;
-  #canvas: {
+  private event: IEvent;
+  private canvas: {
     left?: Selection<SVGGElement, unknown, HTMLElement, any>,
     right?: Selection<SVGGElement, unknown, HTMLElement, any>
   }
   constructor(selector: string) {
-    this.#event = {};
-    this.#data = {};
-    this.#canvas = {}
-    this.#svg = d3.select(selector).append('svg')
-    const { width = 0, height = 0 } = document.querySelector(selector)?.getClientRects()?.[0] || {}
-    this.#root = this.#svg.append('g');
-    this.#svg
-      .attr('width', width)
-      .attr('height', height)
-      .call(this.#zoomHandler)
-      .call(this.#zoomHandler.translateBy, width / 2, height / 2)
-      .on('dblclick.zoom', null);
+    super(selector)
+    this.event = {};
+    this.data = {};
+    this.canvas = {};
   }
-  get #zoomHandler(): any {
-    const zoom = (x: number, y: number, k: number) => {
-      this.#root?.attr('transform', `translate(${x},${y}) scale(${k})`)
-    }
-    return d3
-      .zoom()
-      .scaleExtent([0.4, 10])
-      .on('zoom', (event) => {
-        const { x, y, k } = event.transform;
-        zoom(x, y, k)
-      });
-  }
-  #createDesc = (desc: string | IDesc, text: Selection<SVGTextElement, unknown, HTMLElement, any>) => {
+  private createDesc = (desc: string | IDesc, text: Selection<SVGTextElement, unknown, HTMLElement, any>) => {
     const _text = typeof desc === 'string' ? desc : desc.text ?? '';
     const _color = typeof desc === 'string' ? '#999' : desc.fill ?? '#999'
     text.append('tspan').text(' [').attr('fill', '#999')
     text.append('tspan').text(_text).attr('fill', _color)
     text.append('tspan').text(']').attr('fill', '#999')
   }
-  #createNode = (node: Selection<SVGGElement, unknown, HTMLElement, any>, data: IFillData, position: Position) => {
+  private createNode = (node: Selection<SVGGElement, unknown, HTMLElement, any>, data: FillData, position: Position) => {
     const { __attrs, type, text: content, desc } = data;
     const { width, height } = __attrs;
     let x = -__attrs.padding / 2,
@@ -78,10 +61,10 @@ class Enterprise {
     const text = node
       .append('text')
       .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'middle')
       .attr('x', x)
       .attr('y', 1)
-      .attr('font-size', 12)
-      .attr('dominant-baseline', 'middle');
+      .attr('font-size', 12);
     text
       .append('tspan')
       .text(content || '')
@@ -89,10 +72,10 @@ class Enterprise {
     if (desc) {
       if (Array.isArray(desc)) {
         desc.forEach(item => {
-          this.#createDesc(item, text)
+          this.createDesc(item, text)
         })
       } else {
-        this.#createDesc(desc, text)
+        this.createDesc(desc, text)
       }
     }
     node.append('circle')
@@ -132,8 +115,8 @@ class Enterprise {
       .attr('class', 'plus vertical-line')
   }
 
-  #animation = (position: Position) => {
-    const data = this.#data[position];
+  private animation = (position: Position) => {
+    const data = this.data[position];
     const stack = [data];
     let index = 0;
     while (stack.length) {
@@ -143,7 +126,7 @@ class Enterprise {
           stack.push(...curr.__children)
         }
         const { x, y } = curr.__attrs;
-        const canvas = this.#canvas[position];
+        const canvas = this.canvas[position];
         if (!canvas) {
           continue;
         }
@@ -157,13 +140,13 @@ class Enterprise {
           node.select('.plus-circle>.plus.vertical-line').attr('opacity', 1)
         }
         node.on('click', () => {
-          if (!curr.__attrs.__expandable) {
+          if (!curr.__attrs.expandable) {
             return;
           }
           if (curr.__children?.length) {
-            this.#onRetract(curr, position)
+            this.onRetract(curr, position)
           } else {
-            this.#onExpand(curr, position)
+            this.onExpand(curr, position)
           }
         })
         line.attr('opacity', 1)
@@ -190,7 +173,7 @@ class Enterprise {
     }
   }
   // 收起
-  #onRetract = (data: IFillData, position: Position) => {
+  private onRetract = (data: FillData, position: Position) => {
     const _children = data.__children;
     const { x, y } = data.__attrs;
     if (_children?.length) {
@@ -223,17 +206,17 @@ class Enterprise {
           item.__node = undefined;
           item.__line = undefined;
         })
-        data.__children = []
-        this.#animation(position)
+        data.__children = [];
+        this.animation(position)
       }, 300)
     }
   }
 
-  #insert = (data: IFillData, position: Position) => {
+  private insert = (data: FillData, position: Position) => {
     data.__children = data.children?.map(item => {
       return (item.__children = [], item)
     })
-    const _data = this.#data[position];
+    const _data = this.data[position];
     const stash = [_data];
     const id = data.children?.[0]?.__id;
     if (id) {
@@ -251,14 +234,14 @@ class Enterprise {
           stash.push(...item.__children)
         }
       }
-      const canvas = this.#canvas[position];
+      const canvas = this.canvas[position];
       if (!canvas) {
         return;
       }
       const nodes = canvas.select('.nodes')
       const lines = canvas.select('.lines')
       const { x, y } = data.__attrs;
-      const _process: IFillData[] = []
+      const _process: FillData[] = [];
       data.__children?.forEach((item, _index) => {
         if (item.type === 'label') {
           _process.push(item)
@@ -279,44 +262,45 @@ class Enterprise {
           .attr('stroke-width', 0.5)
           .attr('opacity', 0)
         item.__line = line;
-        this.#createNode(node, item, position)
+        this.createNode(node, item, position)
       })
       if (_process?.length) {
-        _process.forEach(item => this.#insert(item, position))
+        _process.forEach(item => this.insert(item, position))
       }
     }
   }
   // 展开
-  #onExpand = async (data: IFillData, position: Position) => {
+  private onExpand = async (data: FillData, position: Position) => {
     if (data.children?.length) {
-      this.#insert(data, position)
+      this.insert(data, position)
       // 计算需要插入的位置
-      setTimeout(() => this.#animation(position), 100)
+      document.body.getBoundingClientRect()
+      this.animation(position)
     } else {
       const { text, type, extData } = data;
-      const datas = await this.#event.request?.({ text, type, extData });
+      const datas = await this.event.request?.({ text, type, extData });
       if (datas && datas.length) {
-        data.children = datas.map((item, index) => getFillData(item, {
+        data.children = datas.map((item, index) => format(item, {
           father: data,
           level: (data.__level || 0) + 1,
           index
         }));
-        this.#onExpand(data, position)
+        this.onExpand(data, position)
       }
     }
   }
   get onrequest() {
-    return this.#event.request
+    return this.event.request
   }
   set onrequest(target) {
-    this.#event.request = target;
+    this.event.request = target;
   }
-  async render(data: IData, position: Position = 'right') {
-    const _data = getFillData(data);
-    this.#data[position] = _data;
+  render(data: IData, position: Position = 'right') {
+    const _data = format(data);
+    this.data[position] = _data;
     const stash = [_data];
-    const g = this.#root.append('g')
-    this.#canvas[position] = g;
+    const g = this.root.append('g')
+    this.canvas[position] = g;
     const lines = g.append('g').attr('class', 'lines')
     const nodes = g.append('g').attr('class', 'nodes');
     const callback = () => {
@@ -352,11 +336,12 @@ class Enterprise {
         .attr('cursor', 'pointer')
       // 绑定节点到数据
       curr.__node = node;
-      this.#createNode(node, curr, position)
+      this.createNode(node, curr, position)
       if (stash.length) {
         requestAnimationFrame(callback)
       } else {
-        setTimeout(() => this.#animation(position), 300)
+        document.body.getBoundingClientRect()
+        this.animation(position)
       }
     }
     requestAnimationFrame(callback)

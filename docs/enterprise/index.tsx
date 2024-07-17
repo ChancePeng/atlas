@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react'
-import Chart from '@change/atlas';
+import React, { useEffect } from "react";
+import { Enterprise } from "@change/atlas";
 import { left, right, presion_guo, persion_niu, ent } from './data';
-import './index.less'
-export default () => {
+
+import '../index.less'
+
+const EntChart = () => {
   useEffect(() => {
-    const enterprise = new Chart.Enterprise('#graph')
+    const enterprise = new Enterprise('#ent')
     enterprise.render(left, 'left')
     enterprise.render(right, 'right')
     enterprise.onrequest = async (config) => {
@@ -17,8 +19,8 @@ export default () => {
       return persion_niu
     }
   }, [])
-  return (
-    <div id="graph">
-    </div>
-  )
+
+  return <div id="ent" className="chart" />
 }
+
+export default EntChart;

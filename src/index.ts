@@ -1,8 +1,7 @@
-import Enterprise from "./enterprise/index";
-
-const Chart = {
-  Enterprise
-}
 
 
-export default Chart
+export * from './data'
+
+export * from './chart';
+
+export * from './utils'
