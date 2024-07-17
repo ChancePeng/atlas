@@ -5,6 +5,7 @@ import type { Position, Attributes } from './types';
 import type { IData, IFillData, IDesc } from '../../data';
 import type { Selection } from 'd3';
 import type { IEvent } from '../types';
+import { animationFrame } from '@/utils';
 
 
 type FillData = IFillData<Attributes>
@@ -179,14 +180,14 @@ class Enterprise extends ChartBase {
     if (_children?.length) {
       const nodes: (Selection<SVGGElement, unknown, HTMLElement, any> | undefined)[] = []
       const lines: (Selection<SVGPathElement, unknown, HTMLElement, any> | undefined)[] = [];
-      const stash = [..._children];
-      while (stash.length) {
-        const curr = stash.shift();
+      const stack = [..._children];
+      while (stack.length) {
+        const curr = stack.shift();
         if (curr) {
           lines.push(curr.__line)
           nodes.push(curr.__node)
           if (curr?.__children?.length) {
-            stash.push(...curr.__children)
+            stack.push(...curr.__children)
           }
         } else {
           break;
@@ -217,12 +218,12 @@ class Enterprise extends ChartBase {
       return (item.__children = [], item)
     })
     const _data = this.data[position];
-    const stash = [_data];
+    const stack = [_data];
     const id = data.children?.[0]?.__id;
     if (id) {
       let index = 0;
-      while (stash.length) {
-        const item = stash.shift();
+      while (stack.length) {
+        const item = stack.shift();
         if (!item) {
           break;
         }
@@ -231,7 +232,7 @@ class Enterprise extends ChartBase {
           break;
         }
         if (item.__children?.length) {
-          stash.push(...item.__children)
+          stack.push(...item.__children)
         }
       }
       const canvas = this.canvas[position];
@@ -298,22 +299,15 @@ class Enterprise extends ChartBase {
   render(data: IData, position: Position = 'right') {
     const _data = format(data);
     this.data[position] = _data;
-    const stash = [_data];
+    const stack = [_data];
     const g = this.root.append('g')
     this.canvas[position] = g;
     const lines = g.append('g').attr('class', 'lines')
     const nodes = g.append('g').attr('class', 'nodes');
-    const callback = () => {
-      if (!stash.length) {
-        return;
-      }
-      const curr = stash.shift();
-      if (!curr) {
-        return;
-      }
+    animationFrame<FillData>(stack, curr => {
       const { __children, type } = curr;
       if (__children?.length) {
-        stash.push(...__children)
+        stack.push(...__children)
       }
       // 非根节点画线，根节点不需要画线
       if (type !== 'root') {
@@ -337,14 +331,10 @@ class Enterprise extends ChartBase {
       // 绑定节点到数据
       curr.__node = node;
       this.createNode(node, curr, position)
-      if (stash.length) {
-        requestAnimationFrame(callback)
-      } else {
-        document.body.getBoundingClientRect()
-        this.animation(position)
-      }
-    }
-    requestAnimationFrame(callback)
+    }, () => {
+      document.body.getBoundingClientRect()
+      this.animation(position)
+    })
   }
 }
 

@@ -130,14 +130,14 @@ class StockRight extends ChartBase {
     if (_children?.length) {
       const nodes: (Selection<SVGGElement, unknown, HTMLElement, any> | undefined)[] = []
       const lines: (Selection<SVGPathElement, unknown, HTMLElement, any> | undefined)[] = [];
-      const stash = [..._children];
-      while (stash.length) {
-        const curr = stash.shift();
+      const stack = [..._children];
+      while (stack.length) {
+        const curr = stack.shift();
         if (curr) {
           lines.push(curr.__line)
           nodes.push(curr.__node)
           if (curr?.__children?.length) {
-            stash.push(...curr.__children)
+            stack.push(...curr.__children)
           }
         } else {
           break;
@@ -167,12 +167,12 @@ class StockRight extends ChartBase {
       return (item.__children = [], item)
     })
     const _data = this.data;
-    const stash = [_data];
+    const stack = [_data];
     const id = data.children?.[0]?.__id;
     if (id) {
       let index = 0;
-      while (stash.length) {
-        const item = stash.shift();
+      while (stack.length) {
+        const item = stack.shift();
         if (!item) {
           break;
         }
@@ -181,7 +181,7 @@ class StockRight extends ChartBase {
           break;
         }
         if (item.__children?.length) {
-          stash.push(...item.__children)
+          stack.push(...item.__children)
         }
       }
       const canvas = this.root;
@@ -223,7 +223,8 @@ class StockRight extends ChartBase {
     if (data.children?.length) {
       this.insert(data)
       // 计算需要插入的位置
-      setTimeout(() => this.animation(), 100)
+      document.body.getBoundingClientRect();
+      this.animation()
     } else {
       const { text, type, extData } = data;
       const datas = await this.event.request?.({ text, type, extData });
@@ -238,9 +239,9 @@ class StockRight extends ChartBase {
     }
   }
   private animation = () => {
-    const stash = [this.data];
-    while (stash.length) {
-      const curr = stash.shift();
+    const stack = [this.data];
+    while (stack.length) {
+      const curr = stack.shift();
       if (curr) {
         const __attrs = curr.__attrs;
         const { x, y } = curr.__attrs;
@@ -250,7 +251,7 @@ class StockRight extends ChartBase {
         if (node) {
           node.attr('transform', `translate(${x},${y})`).attr('opacity', 1)
           if (curr.__children?.length) {
-            stash.push(...curr.__children)
+            stack.push(...curr.__children)
             node.select('.plus-circle>.plus.vertical-line').attr('opacity', 0)
           } else {
             node.select('.plus-circle>.plus.vertical-line').attr('opacity', 1)
@@ -290,9 +291,9 @@ class StockRight extends ChartBase {
     const g = this.root.append('g').attr('transform', `translate(-250,20)`)
     const lines = g.append('g').attr('class', 'lines')
     const nodes = g.append('g').attr('class', 'nodes');
-    const stash = [this.data];
-    while (stash.length) {
-      const curr = stash.shift();
+    const stack = [this.data];
+    while (stack.length) {
+      const curr = stack.shift();
       if (curr) {
         const { __children } = curr;
         if (curr.type !== 'root') {
@@ -300,7 +301,7 @@ class StockRight extends ChartBase {
 
         }
         if (__children?.length) {
-          stash.push(...__children)
+          stack.push(...__children)
         }
         const node = nodes
           .append('g')

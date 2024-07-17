@@ -103,14 +103,14 @@ class Penetration extends ChartBase {
     if (_children?.length) {
       const nodes: (Selection<SVGGElement, unknown, HTMLElement, any> | undefined)[] = []
       const lines: (Selection<SVGPathElement, unknown, HTMLElement, any> | undefined)[] = [];
-      const stash = [..._children];
-      while (stash.length) {
-        const curr = stash.shift();
+      const stack = [..._children];
+      while (stack.length) {
+        const curr = stack.shift();
         if (curr) {
           lines.push(curr.__line)
           nodes.push(curr.__node)
           if (curr?.__children?.length) {
-            stash.push(...curr.__children)
+            stack.push(...curr.__children)
           }
         } else {
           break;
@@ -141,12 +141,12 @@ class Penetration extends ChartBase {
       return (item.__children = [], item)
     })
     const _data = this.data[position];
-    const stash = [_data];
+    const stack = [_data];
     const id = data.children?.[0]?.__id;
     if (id) {
       let index = 0;
-      while (stash.length) {
-        const item = stash.shift();
+      while (stack.length) {
+        const item = stack.shift();
         if (!item) {
           break;
         }
@@ -155,7 +155,7 @@ class Penetration extends ChartBase {
           break;
         }
         if (item.__children?.length) {
-          stash.push(...item.__children)
+          stack.push(...item.__children)
         }
       }
       const canvas = this.canvas[position];
@@ -217,13 +217,13 @@ class Penetration extends ChartBase {
     const canvas = this.canvas[position];
     const data = this.data[position]
     if (canvas && data) {
-      const stash = [data];
-      while (stash.length) {
-        const curr = stash.shift();
+      const stack = [data];
+      while (stack.length) {
+        const curr = stack.shift();
         if (curr) {
           const { __attrs: { x, y }, __node, __line, __children } = curr;
           if (__children?.length) {
-            stash.push(...__children)
+            stack.push(...__children)
           }
           const x1 = curr.__father?.__attrs.x || 0;
           let y1 = curr.__father?.__attrs.y || 0;
@@ -274,15 +274,15 @@ class Penetration extends ChartBase {
   render(data: IData, position: Position = 'bottom') {
     const _data = this.data[position] = format(data);
     const canvas = this.canvas[position] = this.root.append('g');
-    const stash = [_data];
+    const stack = [_data];
     const lines = canvas.append('g').attr('class', 'lines')
     const nodes = canvas.append('g').attr('class', 'nodes')
-    while (stash.length) {
-      const curr = stash.shift();
+    while (stack.length) {
+      const curr = stack.shift();
       if (curr) {
         const { __children, } = curr;
         if (__children?.length) {
-          stash.push(...__children)
+          stack.push(...__children)
         }
         if (curr.type !== 'root') {
           curr.__line = lines

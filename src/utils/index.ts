@@ -36,3 +36,29 @@ export function split(str: string, length: number = 12) {
   });
   return result;
 }
+
+
+export const animationFrame = <T = unknown>(
+  stack: (T | undefined)[], callback: (item: T, stop: () => void) => void,
+  onFinished?: (index:number) => void
+) => {
+
+  let state = true;
+  let index = 0;
+  const stop = () => {
+    state = false;
+  }
+  const animationCallback = () => {
+    const item = stack.shift();
+    if (item) {
+      callback(item, stop)
+    }
+    index++;
+    if (stack.length && state) {
+      requestAnimationFrame(animationCallback)
+    } else {
+      onFinished?.(index)
+    }
+  }
+  requestAnimationFrame(animationCallback)
+}
