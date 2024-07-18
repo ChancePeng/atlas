@@ -106,18 +106,13 @@ class Penetration extends ChartBase {
       const nodes: (Selection<SVGGElement, unknown, HTMLElement, any> | undefined)[] = []
       const lines: (Selection<SVGPathElement, unknown, HTMLElement, any> | undefined)[] = [];
       const stack = [..._children];
-      while (stack.length) {
-        const curr = stack.shift();
-        if (curr) {
-          lines.push(curr.__line)
-          nodes.push(curr.__node)
-          if (curr?.__children?.length) {
-            stack.push(...curr.__children)
-          }
-        } else {
-          break;
+      stackFrame<FillData>(stack, item => {
+        lines.push(item.__line)
+        nodes.push(item.__node)
+        if (item?.__children?.length) {
+          stack.push(...item.__children)
         }
-      }
+      })
       const _y = position === 'top' ? -y : y
       nodes.forEach(item => {
         item?.attr('transform', `translate(${x},${_y})`)?.attr('opacity', 0)

@@ -167,18 +167,13 @@ class Enterprise extends ChartBase {
       const nodes: (SVGGSelection | undefined)[] = []
       const lines: (SVGPathSelection | undefined)[] = [];
       const stack = [..._children];
-      while (stack.length) {
-        const curr = stack.shift();
-        if (curr) {
-          lines.push(curr.__line)
-          nodes.push(curr.__node)
-          if (curr?.__children?.length) {
-            stack.push(...curr.__children)
-          }
-        } else {
-          break;
+      stackFrame<FillData>(stack, item => {
+        lines.push(item.__line)
+        nodes.push(item.__node)
+        if (item?.__children?.length) {
+          stack.push(...item.__children)
         }
-      }
+      })
       const _x = position === 'left' ? -x : x
       nodes.forEach(item => {
         item?.attr('transform', `translate(${_x},${y})`)?.attr('opacity', 0)
@@ -229,15 +224,15 @@ class Enterprise extends ChartBase {
           .attr('class', 'node')
           .attr('transform', `translate(${_x},${y})`)
           .attr('opacity', 0)
-          .attr('cursor', 'pointer')
-        item.__node = node;
+          .attr('cursor', 'pointer');
         const line = lines.insert('path', selector.line)
           .attr('class', 'line')
           .attr('fill', 'none')
           .attr('stroke', '#D8D8D8')
           .attr('stroke-opacity', 0.9)
           .attr('stroke-width', 0.5)
-          .attr('opacity', 0)
+          .attr('opacity', 0);
+        item.__node = node;
         item.__line = line;
         this.packing(node, item, position)
       })
@@ -281,8 +276,8 @@ class Enterprise extends ChartBase {
     this.canvas[position] = g;
     const lines = g.append('g').attr('class', 'lines')
     const nodes = g.append('g').attr('class', 'nodes');
-    animationFrame<FillData>(stack, curr => {
-      const { __children, type } = curr;
+    animationFrame<FillData>(stack, item => {
+      const { __children, type } = item;
       if (__children?.length) {
         stack.push(...__children)
       }
@@ -296,7 +291,7 @@ class Enterprise extends ChartBase {
           .attr('stroke-opacity', 0.9)
           .attr('stroke-width', 0.5)
           .attr('opacity', 0)
-        curr.__line = line;
+        item.__line = line;
       }
       // 插入当前节点
       const node = nodes
@@ -306,8 +301,8 @@ class Enterprise extends ChartBase {
         .attr('opacity', type === 'root' ? 1 : 0)
         .attr('cursor', 'pointer')
       // 绑定节点到数据
-      curr.__node = node;
-      this.packing(node, curr, position)
+      item.__node = node;
+      this.packing(node, item, position)
     }, () => {
       document.body.getBoundingClientRect()
       this.animation(position)

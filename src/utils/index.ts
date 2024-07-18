@@ -91,9 +91,9 @@ export const stackFrame = <T = unknown>(
       callback(item, index, stop)
     }
     if (!stack.length) {
-      onFinished?.(index);
       break;
     }
     index++;
   }
+  onFinished?.(index);
 }

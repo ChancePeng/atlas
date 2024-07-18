@@ -3,7 +3,7 @@ import ChartBase from "../base";
 import format from "./format";
 
 import type { IData } from "@/data";
-import { FillData } from "./types";
+import type { FillData } from "./types";
 
 class Controller extends ChartBase {
   data?: FillData;
