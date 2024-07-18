@@ -6,7 +6,7 @@ export interface IDesc {
   title?: string,
 }
 
-interface Tag {
+export interface ITag {
   fill?: string,
   text?: string
 }
@@ -34,7 +34,7 @@ export interface IData<T = any> {
   expandable?: boolean,
   children?: IData<T>[],
   fill?: string,
-  tags?: (string | Tag)[],
+  tags?: (string | ITag)[],
   extData?: T,
 }
 
