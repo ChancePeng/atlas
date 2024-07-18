@@ -131,47 +131,54 @@ class Penetration extends ChartBase {
     }
   }
 
-  private insert = (data: FillData, position: Position) => {
-    data.__children = data.children?.map(item => {
-      return (item.__children = [], item)
-    })
-    const id = data.children?.[0]?.__id;
-    if (id) {
-      const canvas = this.canvas[position];
-      if (!canvas) {
-        return;
+  private append = (data: FillData, position: Position, isInsert?: boolean) => {
+    const stack = isInsert ? [...data.__children || []] : [data]
+    const canvas = this.canvas[position];
+    if (!canvas) {
+      return;
+    }
+    const nodes = canvas.select('.nodes')
+    const lines = canvas.select('.lines')
+    const point = {
+      x: isInsert ? data.__attrs.x : 0,
+      y: isInsert ? data.__attrs.y : 0
+    }
+    if (position === 'top') {
+      point.y = -point.y
+    }
+    animationFrame<FillData>(stack, item => {
+      const { type, __children } = item;
+      if (__children?.length) {
+        stack.push(...__children)
       }
-      const nodes = canvas.select('.nodes')
-      const lines = canvas.select('.lines')
-      const { x, y } = data.__attrs;
-      data.__children?.forEach((item) => {
-        const _y = position === 'top' ? -y : y;
-        const node = nodes
-          .append('g')
-          .attr('class', 'node')
-          .attr('transform', `translate(${x},${_y})`)
-          .attr('opacity', 0)
-          .attr('cursor', 'pointer')
-        item.__node = node;
-        const line = lines.append('path')
+      item.__node = nodes
+        .append('g')
+        .attr('class', 'node')
+        .attr('transform', `translate(${point.x},${point.y})`)
+        .attr('opacity', 0)
+        .attr('cursor', 'pointer')
+      this.packing(item.__node, item, position)
+      if (type !== 'root') {
+        item.__line = lines
+          .append('path')
           .attr('class', 'line')
           .attr('fill', 'none')
           .attr('stroke', '#D8D8D8')
           .attr('stroke-opacity', 0.9)
           .attr('stroke-width', 0.5)
-          .attr('opacity', 0)
-        item.__line = line;
-        this.packing(node, item, position)
-      })
-    }
+          .attr('opacity', 0);
+      }
+    }, () => {
+      document.body.getBoundingClientRect();
+      this.animation(position)
+    })
   }
+
   // 展开
   private onExpand = async (data: FillData, position: Position) => {
     if (data.children?.length) {
-      this.insert(data, position)
-      // 计算需要插入的位置
-      document.body.getBoundingClientRect()
-      this.animation(position)
+      data.__children = [...data.children]
+      this.append(data, position, true)
     } else {
       const { text, type, extData } = data;
       const datas = await this.event.request?.({ text, type, extData });
@@ -239,35 +246,9 @@ class Penetration extends ChartBase {
   render(data: IData, position: Position = 'bottom') {
     const _data = this.data[position] = format(data, { fieldNames: this.fieldNames });
     const canvas = this.canvas[position] = this.root.append('g');
-    const stack = [_data];
-    const lines = canvas.append('g').attr('class', 'lines')
-    const nodes = canvas.append('g').attr('class', 'nodes')
-    animationFrame<FillData>(stack, item => {
-      const { __children, } = item;
-      if (__children?.length) {
-        stack.push(...__children)
-      }
-      if (item.type !== 'root') {
-        item.__line = lines
-          .append('path')
-          .attr('class', 'line')
-          .attr('fill', 'none')
-          .attr('stroke', '#D8D8D8')
-          .attr('stroke-width', 0.5)
-          .attr('stroke-opacity', 0.9)
-      }
-      const node = nodes
-        .append('g')
-        .attr('class', 'node')
-        .attr('transform', `translate(0,0)`)
-        .attr('cursor', 'pointer')
-        .attr('opacity', 0)
-      item.__node = node;
-      this.packing(node, item, position)
-    }, () => {
-      document.body.getBoundingClientRect()
-      this.animation(position)
-    })
+    canvas.append('g').attr('class', 'lines')
+    canvas.append('g').attr('class', 'nodes')
+    this.append(_data,position)
   }
 }
 

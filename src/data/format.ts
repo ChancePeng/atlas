@@ -1,5 +1,3 @@
-import { v4 as uuid } from 'uuid';
-
 import type { FieldNames, IData, IFillData } from "./types";
 
 
@@ -39,7 +37,6 @@ export const format = <T = Record<string, any>, P = any>(data: IData<P>, option?
     ...data,
     __index: index,
     __father: father,
-    __id: uuid(),
     __level: level,
     get __brother() {
       return father?.__children
@@ -54,9 +51,7 @@ export const format = <T = Record<string, any>, P = any>(data: IData<P>, option?
       fieldNames
     }
     that.children = children.map((item, index) => format(item, { ..._option, index, attrs }))
-    if (level < 2) {
-      that.__children = children.map((item, index) => format(item, { ..._option, index, attrs }))
-    }
+    that.__children = [...that.children]
   }
   if (attrs instanceof Function) {
     that.__attrs = attrs.call(that, that)

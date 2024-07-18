@@ -153,43 +153,53 @@ class StockRight extends ChartBase {
     }
   }
 
-  private insert = (data: FillData) => {
-    data.__children = data.children?.map(item => {
-      return (item.__children = [], item)
-    })
+
+  private append = (data: FillData, isInsert?: boolean) => {
+    const stack = isInsert ? [...data.__children || []] : [data]
     const canvas = this.root;
-    const id = data.children?.[0]?.__id;
-    if (id && canvas) {
-      const nodes = canvas.select('.nodes')
-      const lines = canvas.select('.lines')
-      const { x, y } = data.__attrs;
-      data.__children?.forEach((item) => {
-        const node = nodes
-          .append('g')
-          .attr('class', 'node')
-          .attr('transform', `translate(${x},${y})`)
-          .attr('opacity', 0)
-          .attr('cursor', 'pointer')
-        const line = lines.append('path')
+    if (!canvas) {
+      return;
+    }
+    const nodes = canvas.select('.nodes')
+    const lines = canvas.select('.lines')
+    const point = {
+      x: isInsert ? data.__attrs.x : 0,
+      y: isInsert ? data.__attrs.y : 0
+    }
+    animationFrame<FillData>(stack, item => {
+      const { type, __children } = item;
+      if (__children?.length) {
+        stack.push(...__children)
+      }
+      item.__node = nodes
+        .append('g')
+        .attr('class', 'node')
+        .attr('transform', `translate(${point.x},${point.y})`)
+        .attr('opacity', 0)
+        .attr('cursor', 'pointer')
+      this.packing(item.__node, item)
+      if (type !== 'root') {
+        item.__line = lines
+          .append('path')
           .attr('class', 'line')
           .attr('fill', 'none')
           .attr('stroke', '#D8D8D8')
           .attr('stroke-opacity', 0.9)
           .attr('stroke-width', 0.5)
-          .attr('opacity', 0)
-        item.__line = line;
-        item.__node = node;
-        this.packing(node, item)
-      })
-    }
+          .attr('opacity', 0);
+      }
+    }, () => {
+      document.body.getBoundingClientRect();
+      this.animation()
+    })
   }
+
+
   // 展开
   private onExpand = async (data: FillData) => {
     if (data.children?.length) {
-      this.insert(data)
-      // 计算需要插入的位置
-      document.body.getBoundingClientRect();
-      this.animation()
+      data.__children = [...data.children]
+      this.append(data,true)
     } else {
       const { text, type, extData } = data;
       const datas = await this.event.request?.({ text, type, extData });
@@ -245,30 +255,10 @@ class StockRight extends ChartBase {
     this.data = format(data, {
       fieldNames: this.fieldNames
     })
-    const g = this.root.append('g').attr('transform', `translate(-250,20)`)
-    const lines = g.append('g').attr('class', 'lines')
-    const nodes = g.append('g').attr('class', 'nodes');
-    const stack = [this.data];
-    animationFrame<FillData>(stack, item => {
-      const { __children } = item;
-      if (item.type !== 'root') {
-        item.__line = lines.append('path').attr('class', 'line').attr('stroke', '#D8D8D8').attr('fill', 'none')
-      }
-      if (__children?.length) {
-        stack.push(...__children)
-      }
-      const node = nodes
-        .append('g')
-        .attr('class', 'node')
-        .attr('transform', `translate(0,0)`)
-        .attr('cursor', "pointer")
-        .attr('opacity', 0)
-      item.__node = node;
-      this.packing(node, item)
-    }, () => {
-      document.body.getBoundingClientRect()
-      this.animation()
-    })
+    const canvas = this.root.append('g').attr('transform', `translate(-250,20)`)
+    canvas.append('g').attr('class', 'lines')
+    canvas.append('g').attr('class', 'nodes');
+    this.append(this.data)
   }
 }
 

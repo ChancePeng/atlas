@@ -190,54 +190,53 @@ class Enterprise extends ChartBase {
     }
   }
 
-  private insert = (data: FillData, position: Position) => {
-    data.__children = data.children?.map(item => {
-      return (item.__children = [], item)
-    })
-    const id = data.children?.[0]?.__id;
-    if (id) {
-      const canvas = this.canvas[position];
-      if (!canvas) {
-        return;
+  private append = (data: FillData, position: Position, isInsert?: boolean) => {
+    const stack = isInsert ? [...data.__children || []] : [data]
+    const canvas = this.canvas[position];
+    if (!canvas) {
+      return;
+    }
+    const nodes = canvas.select('.nodes')
+    const lines = canvas.select('.lines')
+    const point = {
+      x: isInsert ? data.__attrs.x : 0,
+      y: isInsert ? data.__attrs.y : 0
+    }
+    if (position === 'left') {
+      point.x = -point.x
+    }
+    animationFrame<FillData>(stack, item => {
+      const { type, __children } = item;
+      if (__children?.length) {
+        stack.push(...__children)
       }
-      const nodes = canvas.select('.nodes')
-      const lines = canvas.select('.lines')
-      const { x, y } = data.__attrs;
-      const process: FillData[] = [];
-      data.__children?.forEach((item) => {
-        if (item.type === 'label') {
-          process.push(item)
-        }
-        const _x = position === 'left' ? -x : x;
-        const node = nodes
-          .append('g')
-          .attr('class', 'node')
-          .attr('transform', `translate(${_x},${y})`)
-          .attr('opacity', 0)
-          .attr('cursor', 'pointer');
-        const line = lines.append('path')
+      item.__node = nodes
+        .append('g')
+        .attr('class', 'node')
+        .attr('transform', `translate(${point.x},${point.y})`)
+        .attr('opacity', type === 'root' ? 1 : 0)
+        .attr('cursor', 'pointer')
+      this.packing(item.__node, item, position)
+      if (type !== 'root') {
+        item.__line = lines
+          .append('path')
           .attr('class', 'line')
           .attr('fill', 'none')
           .attr('stroke', '#D8D8D8')
           .attr('stroke-opacity', 0.9)
           .attr('stroke-width', 0.5)
           .attr('opacity', 0);
-        item.__node = node;
-        item.__line = line;
-        this.packing(node, item, position)
-      })
-      if (process?.length) {
-        process.forEach(item => this.insert(item, position))
       }
-    }
+    }, () => {
+      document.body.getBoundingClientRect();
+      this.animation(position)
+    })
   }
   // 展开
   private onExpand = async (data: FillData, position: Position) => {
     if (data.children?.length) {
-      this.insert(data, position)
-      // 计算需要插入的位置
-      document.body.getBoundingClientRect()
-      this.animation(position)
+      data.__children = [...data.children]
+      this.append(data, position, true)
     } else {
       const { text, type, extData } = data;
       const datas = await this.event.request?.({ text, type, extData });
@@ -261,42 +260,10 @@ class Enterprise extends ChartBase {
   render(data: IData, position: Position = 'right') {
     const _data = format(data, { fieldNames: this.fieldNames });
     this.data[position] = _data;
-    const stack = [_data];
-    const g = this.root.append('g')
-    this.canvas[position] = g;
-    const lines = g.append('g').attr('class', 'lines')
-    const nodes = g.append('g').attr('class', 'nodes');
-    animationFrame<FillData>(stack, item => {
-      const { __children, type } = item;
-      if (__children?.length) {
-        stack.push(...__children)
-      }
-      // 非根节点画线，根节点不需要画线
-      if (type !== 'root') {
-        const line = lines
-          .append('path')
-          .attr('class', 'line')
-          .attr('fill', 'none')
-          .attr('stroke', '#D8D8D8')
-          .attr('stroke-opacity', 0.9)
-          .attr('stroke-width', 0.5)
-          .attr('opacity', 0)
-        item.__line = line;
-      }
-      // 插入当前节点
-      const node = nodes
-        .append('g')
-        .attr('class', 'node')
-        .attr('transform', `translate(0,0)`)
-        .attr('opacity', type === 'root' ? 1 : 0)
-        .attr('cursor', 'pointer')
-      // 绑定节点到数据
-      item.__node = node;
-      this.packing(node, item, position)
-    }, () => {
-      document.body.getBoundingClientRect()
-      this.animation(position)
-    })
+    const canvas = this.canvas[position] = this.root.append('g')
+    canvas.append('g').attr('class', 'lines')
+    canvas.append('g').attr('class', 'nodes');
+    this.append(_data, position)
   }
 }
 

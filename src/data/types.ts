@@ -52,7 +52,6 @@ export interface IData<T = any> {
 
 
 export interface IFillData<T = IAttributes, P = any> extends IData<P> {
-  __id: string,
   __attrs: T,
   __father?: IFillData<T>,
   __index?: number,
