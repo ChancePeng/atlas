@@ -8,8 +8,14 @@ export function count(str: string) {
   return count;
 }
 
-export function width(str: string) {
-  return count(str) * 6 + 14;
+interface Option {
+  size?: number,
+  padding?: number
+}
+
+export function pixel(str: string, option?: Option) {
+  const { size = 12, padding = 14 } = option || {};
+  return count(str) * size / 2 + padding;
 }
 
 
@@ -40,7 +46,7 @@ export function split(str: string, length: number = 12) {
 
 export const animationFrame = <T = unknown>(
   stack: (T | undefined)[], callback: (item: T, stop: () => void) => void,
-  onFinished?: (index:number) => void
+  onFinished?: (index: number) => void
 ) => {
 
   let state = true;

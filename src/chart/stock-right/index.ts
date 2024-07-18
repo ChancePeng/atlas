@@ -1,7 +1,7 @@
 import ChartBase from "../base";
 import format from "./format";
 import { IData, IFillData } from "@/data";
-import { width as _width } from "@/utils";
+import { pixel } from "@/utils";
 
 import type { Attributes } from "./types";
 import type { IEvent } from "../types";
@@ -48,7 +48,7 @@ class StockRight extends ChartBase {
       _tags.forEach((item) => {
         const content = typeof item === 'string' ? item : item.text ?? ''
         const _fill = typeof item === 'string' ? '#BB833D' : item.fill ?? '#BB833D'
-        const __width = _width(content) + 4
+        const __width = pixel(content) + 4
         tag
           .append('rect')
           .attr('width', __width)
@@ -80,7 +80,7 @@ class StockRight extends ChartBase {
               .attr('font-size', 12)
               .append('tspan').text(item)
 
-            _x = _width(item)
+            _x = pixel(item)
           } else {
             const { fill, text, title } = item || {};
             const _title = title ? `${title}: ` : ''
@@ -91,7 +91,7 @@ class StockRight extends ChartBase {
               .attr('fill', '#808080')
               .append('tspan').text(text ?? '')
               .attr('fill', fill ?? '#FF8900')
-            _x = _width(`${_title}${text || ''}`)
+            _x = pixel(`${_title}${text || ''}`)
           }
         })
       }

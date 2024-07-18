@@ -1,5 +1,5 @@
 import { format as _format, IData, FormatOptions } from "@/data"
-import { width as _width } from "@/utils";
+import { pixel } from "@/utils";
 import { Attributes } from "./types";
 
 const PADDING = 100;
@@ -10,7 +10,7 @@ const format = (data: IData, options?: Options) => {
     attrs(that) {
       return {
         get width() {
-          return _width(that.text || '');
+          return pixel(that.text || '');
         },
         get height() {
           if (that.type === 'root') {

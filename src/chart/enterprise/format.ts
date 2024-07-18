@@ -1,5 +1,5 @@
 import { type IData, type FormatOptions, format as _format } from '@/data'
-import { width } from '@/utils';
+import { pixel } from '@/utils';
 import type { Attributes } from './types';
 
 const concat = (data: IData) => {
@@ -54,7 +54,7 @@ const format = (data: IData, options?: Options) => {
       },
       get width() {
         const text = concat(that)
-        return width(text) + this.padding
+        return pixel(text) + this.padding
       },
       height: 32,
       get x() {

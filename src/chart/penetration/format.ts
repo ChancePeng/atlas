@@ -1,6 +1,6 @@
 import { IData, FormatOptions } from "@/data";
 import { format as _format } from '@/data'
-import { split, width } from "@/utils";
+import { split, pixel } from "@/utils";
 import { Attributes } from "./types";
 const PADDING_X = 10;
 const PADDING_Y = 60;
@@ -18,7 +18,7 @@ const format = (data: IData, options?: Options) => {
           }
           return that.expandable
         },
-        width: that.type === 'root' ? width(that.text || '') : 240,
+        width: that.type === 'root' ? pixel(that.text || '') : 240,
         get height() {
           if (that.type === 'root') {
             return 32
