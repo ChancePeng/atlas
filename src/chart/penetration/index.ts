@@ -18,13 +18,11 @@ class Penetration extends ChartBase {
     top?: Selection<SVGGElement, unknown, HTMLElement, any>,
     bottom?: Selection<SVGGElement, unknown, HTMLElement, any>
   }
-  private map: Record<string, number>
   constructor(selector: string, fieldNames?: FieldNames) {
     super(selector, { fieldNames });
     this.data = {};
     this.canvas = {};
     this.event = {};
-    this.map = {}
   }
   private packing = (node: Selection<SVGGElement, unknown, HTMLElement, any>, data: FillData, position: Position) => {
     const { __attrs } = data;
@@ -139,7 +137,6 @@ class Penetration extends ChartBase {
     })
     const id = data.children?.[0]?.__id;
     if (id) {
-      const index = this.map[id]
       const canvas = this.canvas[position];
       if (!canvas) {
         return;
@@ -147,21 +144,16 @@ class Penetration extends ChartBase {
       const nodes = canvas.select('.nodes')
       const lines = canvas.select('.lines')
       const { x, y } = data.__attrs;
-      const isNumber = Number.isInteger(index)
-      data.__children?.forEach((item, _index) => {
+      data.__children?.forEach((item) => {
         const _y = position === 'top' ? -y : y;
-        const selector = {
-          node: isNumber ? `.nodes>.node:nth-child(${index + _index})` : undefined,
-          line: isNumber ? `.lines>.line:nth-child(${index - 1 + _index})` : undefined
-        }
         const node = nodes
-          .insert('g', selector.node)
+          .append('g')
           .attr('class', 'node')
           .attr('transform', `translate(${x},${_y})`)
           .attr('opacity', 0)
           .attr('cursor', 'pointer')
         item.__node = node;
-        const line = lines.insert('path', selector.line)
+        const line = lines.append('path')
           .attr('class', 'line')
           .attr('fill', 'none')
           .attr('stroke', '#D8D8D8')
@@ -209,10 +201,9 @@ class Penetration extends ChartBase {
   private animation = (position: Position) => {
     const canvas = this.canvas[position];
     const data = this.data[position]
-    this.map = {}
     if (canvas && data) {
       const stack = [data];
-      stackFrame<FillData>(stack, (item, index) => {
+      stackFrame<FillData>(stack, (item) => {
         const { __attrs: { x, y }, __node, __line, __children } = item;
         if (__children?.length) {
           stack.push(...__children)
@@ -236,7 +227,6 @@ class Penetration extends ChartBase {
           .attr('opacity', item.__children?.length ? 0 : 1)
         __line?.attr('d', `M${x1},${y1}L${x1},${y2}L${x2},${y2}L${x2},${y3}`)
           .attr('opacity', 1)
-        this.map[item.__id] = index;
       })
     }
   }

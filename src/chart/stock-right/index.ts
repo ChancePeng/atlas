@@ -10,14 +10,12 @@ import type { Selection } from 'd3';
 class StockRight extends ChartBase {
   private data?: FillData;
   private event: IEvent;
-  private map: Record<string, number>
   constructor(selector: string, fieldNames?: FieldNames) {
     super(selector, {
       position: [20, 'center'],
       fieldNames
     });
     this.event = {};
-    this.map = {}
   }
   private packing = (node: Selection<SVGGElement, unknown, HTMLElement, any>, data: FillData) => {
     const { __attrs, fill, text, tags: _tags, desc } = data;
@@ -162,27 +160,17 @@ class StockRight extends ChartBase {
     const canvas = this.root;
     const id = data.children?.[0]?.__id;
     if (id && canvas) {
-      const index = this.map[id];
-      const isNumber = Number.isInteger(index)
       const nodes = canvas.select('.nodes')
       const lines = canvas.select('.lines')
       const { x, y } = data.__attrs;
-      const _process: FillData[] = [];
-      data.__children?.forEach((item, _index) => {
-        if (item.type === 'label') {
-          _process.push(item)
-        }
-        const selector = {
-          node: isNumber ? `.nodes>.node:nth-child(${index + _index})` : undefined,
-          line: isNumber ? `.lines>.line:nth-child(${index - 1 + _index})` : undefined
-        }
+      data.__children?.forEach((item) => {
         const node = nodes
-          .insert('g', selector.node)
+          .append('g')
           .attr('class', 'node')
           .attr('transform', `translate(${x},${y})`)
           .attr('opacity', 0)
           .attr('cursor', 'pointer')
-        const line = lines.insert('path', selector.line)
+        const line = lines.append('path')
           .attr('class', 'line')
           .attr('fill', 'none')
           .attr('stroke', '#D8D8D8')
@@ -193,9 +181,6 @@ class StockRight extends ChartBase {
         item.__node = node;
         this.packing(node, item)
       })
-      if (_process?.length) {
-        _process.forEach(item => this.insert(item))
-      }
     }
   }
   // 展开
@@ -230,8 +215,7 @@ class StockRight extends ChartBase {
   }
   private animation = () => {
     const stack = [this.data];
-    this.map = {}
-    stackFrame<FillData>(stack, (item, index) => {
+    stackFrame<FillData>(stack, (item) => {
       if (item.__children?.length) {
         stack.push(...item.__children)
       }
@@ -249,7 +233,6 @@ class StockRight extends ChartBase {
         .attr('opacity', item.__children?.length ? 0 : 1)
       item.__line?.attr('d', `M${x1},${y1}L${x1},${y2}L${x2},${y2}`)
         .attr('opacity', 1)
-      this.map[item.__id] = index;
     })
   }
   get onrequest() {

@@ -17,13 +17,11 @@ class Enterprise extends ChartBase {
     left?: SVGGSelection,
     right?: SVGGSelection
   }
-  private map: Record<string, number>;
   constructor(selector: string, fieldNames?: FieldNames) {
     super(selector, { fieldNames })
     this.event = {};
     this.data = {};
-    this.canvas = {};
-    this.map = {}
+    this.canvas = {}
   }
   private innerText = (desc: string | IDesc, text: SVGTextSelection) => {
     const content = typeof desc === 'string' ? desc : desc.text ?? '';
@@ -36,7 +34,7 @@ class Enterprise extends ChartBase {
     const { __attrs, type, text: content, desc } = data;
     const { width, height, fill, expandable } = __attrs;
     const isL = position === 'left'
-    const context: Record<string, any> = {
+    const context: Record<string, number> = {
       x: -__attrs.padding / 2,
       cx: -__attrs.width / 2,
       ix: __attrs.width / 2 - 12,
@@ -124,8 +122,7 @@ class Enterprise extends ChartBase {
   private animation = (position: Position) => {
     const data = this.data[position];
     const stack = [data];
-    this.map = {}
-    stackFrame<FillData>(stack, (item, index) => {
+    stackFrame<FillData>(stack, (item) => {
       if (item.__children) {
         stack.push(...item.__children)
       }
@@ -156,7 +153,6 @@ class Enterprise extends ChartBase {
         L${x2},${y2}
         L${x3},${y2}
       `).attr('opacity', 1)
-      this.map[item.__id] = index;
     })
   }
   // 收起
@@ -200,8 +196,6 @@ class Enterprise extends ChartBase {
     })
     const id = data.children?.[0]?.__id;
     if (id) {
-      const index = this.map[id];
-      const isNumber = Number.isInteger(index)
       const canvas = this.canvas[position];
       if (!canvas) {
         return;
@@ -210,22 +204,18 @@ class Enterprise extends ChartBase {
       const lines = canvas.select('.lines')
       const { x, y } = data.__attrs;
       const process: FillData[] = [];
-      data.__children?.forEach((item, _index) => {
+      data.__children?.forEach((item) => {
         if (item.type === 'label') {
           process.push(item)
         }
-        const selector = {
-          node: isNumber ? `.nodes>.node:nth-child(${index + _index})` : undefined,
-          line: isNumber ? `.lines>.line:nth-child(${index - 1 + _index})` : undefined
-        }
         const _x = position === 'left' ? -x : x;
         const node = nodes
-          .insert('g', selector.node)
+          .append('g')
           .attr('class', 'node')
           .attr('transform', `translate(${_x},${y})`)
           .attr('opacity', 0)
           .attr('cursor', 'pointer');
-        const line = lines.insert('path', selector.line)
+        const line = lines.append('path')
           .attr('class', 'line')
           .attr('fill', 'none')
           .attr('stroke', '#D8D8D8')

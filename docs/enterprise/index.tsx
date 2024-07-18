@@ -16,7 +16,10 @@ const EntChart = () => {
       if (config.text === '郭倩倩') {
         return presion_guo
       }
-      return persion_niu
+      if(config.text === '牛晓路'){
+        return persion_niu
+      }
+      return left.children
     }
   }, [])
 

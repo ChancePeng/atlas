@@ -134,7 +134,7 @@ export const persion_niu: IData[] = [
     children: [
       { type: 'text', text: '宝鸡牛大叔生物科技有限公司', desc: { text: '94.0096%', fill: '#F9AD14' } },
       { type: 'text', text: '江西鸿域信息科技有限公司', },
-      { type: 'text', text: '宝鸡有一群怀揣着梦想的少年相信在牛大叔的带领下会创造生命的奇迹网络科技有限公司', desc: { text: '52.0096%', fill: '#F9AD14' } },
+      { type: 'text', text: '宝鸡有一群怀揣着梦想的少年相信在牛大叔的带领下会创造生命的奇迹网络科技有限公司', desc: { text: '52.0096%', fill: '#F9AD14' }, expandable: true, },
       { type: 'text', text: '河南老牛财税服务有限公司', desc: { text: '98.0096%', fill: '#F9AD14' } },
       { type: 'text', text: '陕西太岁贸易有限公司', desc: { text: '48.0096%', fill: '#F9AD14' } },
       { type: 'text', text: '陕西万资商务秘书有限公司', desc: { text: '76.4696%', fill: '#F9AD14' } },
