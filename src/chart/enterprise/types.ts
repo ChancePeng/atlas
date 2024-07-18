@@ -1,11 +1,11 @@
 
-import { IAttributes } from "../../data";
+import { IAttributes, IFillData } from "../../data";
 export type Position = 'left' | 'right';
 
 
 
 
-export interface Attributes extends IAttributes {
+interface Attributes extends IAttributes {
   fill: string,
   bbox: {
     width: number,
@@ -15,3 +15,5 @@ export interface Attributes extends IAttributes {
   }
   padding: number,
 }
+
+export type FillData = IFillData<Attributes>;

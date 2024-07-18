@@ -43,12 +43,19 @@ export function split(str: string, length: number = 12) {
   return result;
 }
 
+export const reverse = (data: Record<string, number>) => {
+  const result: Record<string, number> = {};
+  Object.keys(data).forEach(key => {
+    result[key] = -data[key]
+  })
+  return result;
+}
+
 
 export const animationFrame = <T = unknown>(
   stack: (T | undefined)[], callback: (item: T, stop: () => void) => void,
   onFinished?: (index: number) => void
 ) => {
-
   let state = true;
   let index = 0;
   const stop = () => {
@@ -67,4 +74,26 @@ export const animationFrame = <T = unknown>(
     }
   }
   requestAnimationFrame(animationCallback)
+}
+
+export const stackFrame = <T = unknown>(
+  stack: (T | undefined)[], callback: (item: T, index: number, stop: () => void) => void,
+  onFinished?: (index: number) => void
+) => {
+  let state = true;
+  let index = 0;
+  const stop = () => {
+    state = false;
+  }
+  while (stack.length && state) {
+    const item = stack.shift();
+    if (item) {
+      callback(item, index, stop)
+    }
+    if (!stack.length) {
+      onFinished?.(index);
+      break;
+    }
+    index++;
+  }
 }

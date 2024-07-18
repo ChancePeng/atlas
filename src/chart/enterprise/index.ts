@@ -1,14 +1,11 @@
 import ChartBase from '../base';
 import format from './format';
+import { animationFrame, reverse, stackFrame } from '@/utils';
 
-import type { Position, Attributes } from './types';
-import type { IData, IFillData, IDesc } from '../../data';
-import type { Selection } from 'd3';
-import type { IEvent } from '../types';
-import { animationFrame } from '@/utils';
+import type { Position, FillData } from './types';
+import type { IData, IDesc } from '@/data';
+import type { IEvent, SVGGSelection, SVGPathSelection, SVGTextSelection } from '../types';
 
-
-type FillData = IFillData<Attributes>
 
 class Enterprise extends ChartBase {
   private data: {
@@ -17,37 +14,35 @@ class Enterprise extends ChartBase {
   };
   private event: IEvent;
   private canvas: {
-    left?: Selection<SVGGElement, unknown, HTMLElement, any>,
-    right?: Selection<SVGGElement, unknown, HTMLElement, any>
+    left?: SVGGSelection,
+    right?: SVGGSelection
   }
+  private map: Record<string, number>;
   constructor(selector: string) {
     super(selector)
     this.event = {};
     this.data = {};
     this.canvas = {};
+    this.map = {}
   }
-  private createDesc = (desc: string | IDesc, text: Selection<SVGTextElement, unknown, HTMLElement, any>) => {
-    const _text = typeof desc === 'string' ? desc : desc.text ?? '';
-    const _color = typeof desc === 'string' ? '#999' : desc.fill ?? '#999'
+  private innerText = (desc: string | IDesc, text: SVGTextSelection) => {
+    const content = typeof desc === 'string' ? desc : desc.text ?? '';
+    const fill = typeof desc === 'string' ? '#999' : desc.fill ?? '#999'
     text.append('tspan').text(' [').attr('fill', '#999')
-    text.append('tspan').text(_text).attr('fill', _color)
+    text.append('tspan').text(content).attr('fill', fill)
     text.append('tspan').text(']').attr('fill', '#999')
   }
-  private createNode = (node: Selection<SVGGElement, unknown, HTMLElement, any>, data: FillData, position: Position) => {
+  private packing = (node: SVGGSelection, data: FillData, position: Position) => {
     const { __attrs, type, text: content, desc } = data;
-    const { width, height } = __attrs;
-    let x = -__attrs.padding / 2,
-      cx = -__attrs.width / 2,
-      icon_translateX = __attrs.width / 2 - 12,
-      arrow_translateX = -__attrs.width / 2 - 20,
-      d = `M0,0L9,-3L9,3Z`;
-    if (position === 'left') {
-      x = -x;
-      cx = -cx;
-      icon_translateX = -icon_translateX;
-      arrow_translateX = -arrow_translateX;
-      d = `M9,0L0,-3L0,3Z`
+    const { width, height, fill, expandable } = __attrs;
+    const isL = position === 'left'
+    const context: Record<string, any> = {
+      x: -__attrs.padding / 2,
+      cx: -__attrs.width / 2,
+      ix: __attrs.width / 2 - 12,
+      ax: -__attrs.width / 2 - 20,
     }
+    const { x, cx, ix, ax } = isL ? reverse(context) : context;
     const rect = node
       .append('rect')
       .attr('width', width)
@@ -57,7 +52,7 @@ class Enterprise extends ChartBase {
       .attr('rx', 2)
       .attr('ry', 2)
     if (type === 'text') {
-      rect.attr('stroke', __attrs.fill)
+      rect.attr('stroke', fill)
     }
     const text = node
       .append('text')
@@ -73,28 +68,28 @@ class Enterprise extends ChartBase {
     if (desc) {
       if (Array.isArray(desc)) {
         desc.forEach(item => {
-          this.createDesc(item, text)
+          this.innerText(item, text)
         })
       } else {
-        this.createDesc(desc, text)
+        this.innerText(desc, text)
       }
     }
     node.append('circle')
       .attr('r', 4)
-      .attr('fill', __attrs.fill)
+      .attr('fill', fill)
       .attr('cx', cx)
       .attr('opacity', type === 'label' ? 1 : 0)
-    node.append('g').attr('transform', `translate(${arrow_translateX},0)`)
+    node.append('g').attr('transform', `translate(${ax},0)`)
       .append('path')
-      .attr('d', d)
-      .attr('fill', __attrs.fill)
+      .attr('d', isL ? 'M9,0L0,-3L0,3Z' : 'M0,0L9,-3L9,3Z')
+      .attr('fill', fill)
       .attr('stroke-width', 0)
       .attr('opacity', type === 'label' ? 1 : 0)
     const icon = node
       .append('g')
       .attr('class', 'plus-circle')
-      .attr('transform', `translate(${icon_translateX},0)`)
-      .attr('opacity', __attrs.padding > 0 ? 1 : 0)
+      .attr('transform', `translate(${ix},0)`)
+      .attr('opacity', expandable ? 1 : 0)
     icon.append('circle')
       .attr('stroke', 'rgb(153, 153, 153)')
       .attr('fill', 'rgb(255, 255, 255)')
@@ -115,71 +110,62 @@ class Enterprise extends ChartBase {
       .attr('style', 'stroke: rgb(153, 153, 153); stroke-width: 1;')
       .attr('class', 'plus vertical-line')
   }
+  private click = (data: FillData, position: Position) => {
+    if (!data.__attrs.expandable) {
+      return;
+    }
+    if (data.__children?.length) {
+      this.onRetract(data, position)
+    } else {
+      this.onExpand(data, position)
+    }
+  }
 
   private animation = (position: Position) => {
     const data = this.data[position];
     const stack = [data];
-    let index = 0;
-    while (stack.length) {
-      const curr = stack.shift();
-      if (curr) {
-        if (curr.__children) {
-          stack.push(...curr.__children)
-        }
-        const { x, y } = curr.__attrs;
-        const canvas = this.canvas[position];
-        if (!canvas) {
-          continue;
-        }
-        const node = canvas.select(`.nodes>.node:nth-child(${index + 1})`)
-        const line = canvas.select(`.lines>.line:nth-child(${index})`)
-        const _x = position === 'left' ? -x : x
-        node.attr('transform', `translate(${_x},${y})`).attr('opacity', 1);
-        if (curr.__children?.length) {
-          node.select('.plus-circle>.plus.vertical-line').attr('opacity', 0)
-        } else {
-          node.select('.plus-circle>.plus.vertical-line').attr('opacity', 1)
-        }
-        node.on('click', () => {
-          if (!curr.__attrs.expandable) {
-            return;
-          }
-          if (curr.__children?.length) {
-            this.onRetract(curr, position)
-          } else {
-            this.onExpand(curr, position)
-          }
-        })
-        line.attr('opacity', 1)
-        const __attrs = curr.__attrs;
-        const __father = curr.__father;
-        let x1 = (__father?.__attrs.x || 0),
-          y1 = __father?.__attrs.y || 0,
-          x2 = __attrs.x,
-          y2 = __attrs.y,
-          middleX = __attrs.x - __attrs.width / 2 - 50
-        if (position === 'left') {
-          x1 = -x1;
-          x2 = -x2;
-          middleX = -middleX
-        }
-        line.attr('d', `
-          M${x1},${y1}
-          L${middleX},${y1}
-          L${middleX},${y2}
-          L${x2},${y2}
-        `)
+    this.map = {}
+    stackFrame<FillData>(stack, (item, index) => {
+      if (item.__children) {
+        stack.push(...item.__children)
       }
-      index++;
-    }
+      const { x, y } = item.__attrs;
+      const _x = position === 'left' ? -x : x
+      item.__node?.attr('transform', `translate(${_x},${y})`)
+        .attr('opacity', 1)
+        .on('click', () => this.click(item, position))
+        .select('.plus-circle>.plus.vertical-line')
+        .attr('opacity', item?.__children?.length ? 0 : 1)
+      const __attrs = item.__attrs;
+      const __father = item.__father;
+      const point: Record<string, Record<string, number>> = {
+        x: {
+          x1: (__father?.__attrs.x || 0),
+          x2: __attrs.x - __attrs.width / 2 - 50,
+          x3: __attrs.x,
+        },
+        y: {
+          y1: __father?.__attrs.y || 0,
+          y2: __attrs.y,
+        }
+      }
+      const { x: { x1, x2, x3 }, y: { y1, y2 } } = (position === 'left' && (point.x = reverse(point.x)), point);
+      item.__line?.attr('d', `
+        M${x1},${y1}
+        L${x2},${y1}
+        L${x2},${y2}
+        L${x3},${y2}
+      `).attr('opacity', 1)
+      this.map[item.__id] = index;
+    })
   }
   // 收起
   private onRetract = (data: FillData, position: Position) => {
     const _children = data.__children;
     const { x, y } = data.__attrs;
     if (_children?.length) {
-      const nodes: (Selection<SVGGElement, unknown, HTMLElement, any> | undefined)[] = []
-      const lines: (Selection<SVGPathElement, unknown, HTMLElement, any> | undefined)[] = [];
+      const nodes: (SVGGSelection | undefined)[] = []
+      const lines: (SVGPathSelection | undefined)[] = [];
       const stack = [..._children];
       while (stack.length) {
         const curr = stack.shift();
@@ -217,24 +203,10 @@ class Enterprise extends ChartBase {
     data.__children = data.children?.map(item => {
       return (item.__children = [], item)
     })
-    const _data = this.data[position];
-    const stack = [_data];
     const id = data.children?.[0]?.__id;
     if (id) {
-      let index = 0;
-      while (stack.length) {
-        const item = stack.shift();
-        if (!item) {
-          break;
-        }
-        index++;
-        if (item.__id === id) {
-          break;
-        }
-        if (item.__children?.length) {
-          stack.push(...item.__children)
-        }
-      }
+      const index = this.map[id];
+      const isNumber = Number.isInteger(index)
       const canvas = this.canvas[position];
       if (!canvas) {
         return;
@@ -242,20 +214,24 @@ class Enterprise extends ChartBase {
       const nodes = canvas.select('.nodes')
       const lines = canvas.select('.lines')
       const { x, y } = data.__attrs;
-      const _process: FillData[] = [];
+      const process: FillData[] = [];
       data.__children?.forEach((item, _index) => {
         if (item.type === 'label') {
-          _process.push(item)
+          process.push(item)
+        }
+        const selector = {
+          node: isNumber ? `.nodes>.node:nth-child(${index + _index})` : undefined,
+          line: isNumber ? `.lines>.line:nth-child(${index - 1 + _index})` : undefined
         }
         const _x = position === 'left' ? -x : x;
         const node = nodes
-          .insert('g', `.nodes>.node:nth-child(${index + _index})`)
+          .insert('g', selector.node)
           .attr('class', 'node')
           .attr('transform', `translate(${_x},${y})`)
           .attr('opacity', 0)
           .attr('cursor', 'pointer')
         item.__node = node;
-        const line = lines.insert('path', `.lines>.line:nth-child(${index - 1 + _index})`)
+        const line = lines.insert('path', selector.line)
           .attr('class', 'line')
           .attr('fill', 'none')
           .attr('stroke', '#D8D8D8')
@@ -263,10 +239,10 @@ class Enterprise extends ChartBase {
           .attr('stroke-width', 0.5)
           .attr('opacity', 0)
         item.__line = line;
-        this.createNode(node, item, position)
+        this.packing(node, item, position)
       })
-      if (_process?.length) {
-        _process.forEach(item => this.insert(item, position))
+      if (process?.length) {
+        process.forEach(item => this.insert(item, position))
       }
     }
   }
@@ -330,7 +306,7 @@ class Enterprise extends ChartBase {
         .attr('cursor', 'pointer')
       // 绑定节点到数据
       curr.__node = node;
-      this.createNode(node, curr, position)
+      this.packing(node, curr, position)
     }, () => {
       document.body.getBoundingClientRect()
       this.animation(position)

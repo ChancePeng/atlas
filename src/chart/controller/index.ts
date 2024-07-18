@@ -24,7 +24,6 @@ class Controller extends ChartBase {
         item.__line?.attr('d', `M${x1},${y1}L${x1},${y1 - 50}L${x2},${y1 - 50}L${x2},${y2}`).attr('opacity', 1)
       })
     }
-
   }
   render(data: IData) {
     this.data = format(data);
