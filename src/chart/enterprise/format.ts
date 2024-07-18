@@ -1,5 +1,7 @@
-import { type IData, type FormatOptions, format as _format } from '@/data'
+import { format as _format } from '@/data'
 import { pixel } from '@/utils';
+
+import type { IData, FormatOptions, FieldNames } from '@/data'
 import type { Attributes } from './types';
 
 const concat = (data: IData) => {
@@ -23,7 +25,9 @@ const concat = (data: IData) => {
   return str
 }
 
-type Options = Omit<FormatOptions<Attributes>, 'attrs'>
+type Options = Omit<FormatOptions<Attributes>, 'attrs'> & {
+  fieldNames?: FieldNames
+}
 const format = (data: IData, options?: Options) => {
   return _format<Attributes>(data, {
     ...options,

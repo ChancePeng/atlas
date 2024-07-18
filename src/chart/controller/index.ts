@@ -1,10 +1,9 @@
 import { animationFrame } from "@/utils";
-import { IData, IFillData } from "../../data";
 import ChartBase from "../base";
 import format from "./format";
-import { Attributes } from "./types";
 
-type FillData = IFillData<Attributes>
+import type { IData } from "@/data";
+import { FillData } from "./types";
 
 class Controller extends ChartBase {
   data?: FillData;
@@ -26,7 +25,9 @@ class Controller extends ChartBase {
     }
   }
   render(data: IData) {
-    this.data = format(data);
+    this.data = format(data, {
+      fieldNames: this.fieldNames
+    });
     const lines = this.root.append('g').attr('class', 'lines')
     const nodes = this.root.append('g').attr('class', 'nodes')
 

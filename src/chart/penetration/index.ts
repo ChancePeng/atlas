@@ -1,13 +1,12 @@
-import { IData, IFillData } from "@/data";
 import ChartBase from "../base";
 import format from "./format";
-import { Attributes } from "./types";
-import type { Selection } from 'd3';
-import type { IEvent } from '../types';
 import { animationFrame, reverse, stackFrame } from "@/utils";
 
-type FillData = IFillData<Attributes>;
-type Position = 'top' | 'bottom'
+import type { IData, FieldNames } from "@/data";
+import type { FillData, Position } from "./types";
+import type { Selection } from 'd3';
+import type { IEvent } from '../types';
+
 
 class Penetration extends ChartBase {
   private data: {
@@ -20,8 +19,8 @@ class Penetration extends ChartBase {
     bottom?: Selection<SVGGElement, unknown, HTMLElement, any>
   }
   private map: Record<string, number>
-  constructor(selector: string) {
-    super(selector);
+  constructor(selector: string, fieldNames?: FieldNames) {
+    super(selector, { fieldNames });
     this.data = {};
     this.canvas = {};
     this.event = {};
@@ -193,7 +192,8 @@ class Penetration extends ChartBase {
         data.children = datas.map((item, index) => format(item, {
           father: data,
           level: (data.__level || 0) + 1,
-          index
+          index,
+          fieldNames: this.fieldNames
         }));
         this.onExpand(data, position)
       }
@@ -252,7 +252,7 @@ class Penetration extends ChartBase {
     this.event.request = target;
   }
   render(data: IData, position: Position = 'bottom') {
-    const _data = this.data[position] = format(data);
+    const _data = this.data[position] = format(data, { fieldNames: this.fieldNames });
     const canvas = this.canvas[position] = this.root.append('g');
     const stack = [_data];
     const lines = canvas.append('g').attr('class', 'lines')

@@ -1,4 +1,4 @@
-import { IAttributes } from "../../data";
+import type { IAttributes, IFillData } from "@/data";
 
 export interface Attributes extends IAttributes {
   box: {
@@ -9,3 +9,7 @@ export interface Attributes extends IAttributes {
   }
   spans: string[],
 }
+
+export type FillData = IFillData<Attributes>;
+
+export type Position = 'top' | 'bottom'

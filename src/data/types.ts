@@ -27,6 +27,15 @@ export interface FormatOptions<T> {
   attrs: T
 }
 
+export interface FieldNames {
+  text?: string,
+  desc?: string,
+  expandable?: string,
+  children?: string,
+  fill?: string,
+  tags?: string,
+}
+
 export interface IData<T = any> {
   type: 'root' | 'label' | 'text',
   text?: string,
@@ -36,6 +45,8 @@ export interface IData<T = any> {
   fill?: string,
   tags?: (string | ITag)[],
   extData?: T,
+  fieldNames?: FieldNames,
+  [data: string]: any
 }
 
 

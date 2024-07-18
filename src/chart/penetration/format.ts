@@ -1,10 +1,14 @@
-import { IData, FormatOptions } from "@/data";
 import { format as _format } from '@/data'
 import { split, pixel } from "@/utils";
-import { Attributes } from "./types";
+import type { IData, FormatOptions, FieldNames } from "@/data";
+import type { Attributes } from "./types";
+
 const PADDING_X = 10;
 const PADDING_Y = 60;
-type Options = Omit<FormatOptions<Attributes>, 'attrs'>;
+
+type Options = Omit<FormatOptions<Attributes>, 'attrs'> & {
+  fieldNames?: FieldNames
+}
 
 const format = (data: IData, options?: Options) => {
   return _format<Attributes>(data, {

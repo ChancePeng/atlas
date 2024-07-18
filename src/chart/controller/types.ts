@@ -1,4 +1,4 @@
-import { IAttributes } from "@/data";
+import type { IAttributes, IFillData } from "@/data";
 
 
 export interface Attributes extends IAttributes {
@@ -6,3 +6,5 @@ export interface Attributes extends IAttributes {
     width: number
   },
 }
+
+export type FillData = IFillData<Attributes>

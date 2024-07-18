@@ -1,22 +1,20 @@
 import ChartBase from "../base";
 import format from "./format";
-import { IData, IFillData } from "@/data";
 import { animationFrame, pixel, stackFrame } from "@/utils";
 
-import type { Attributes } from "./types";
+import type { FieldNames, IData } from "@/data";
+import type { FillData } from "./types";
 import type { IEvent } from "../types";
 import type { Selection } from 'd3';
-
-
-type FillData = IFillData<Attributes>
 
 class StockRight extends ChartBase {
   private data?: FillData;
   private event: IEvent;
   private map: Record<string, number>
-  constructor(selector: string) {
+  constructor(selector: string, fieldNames?: FieldNames) {
     super(selector, {
-      position: [20, 'center']
+      position: [20, 'center'],
+      fieldNames
     });
     this.event = {};
     this.map = {}
@@ -29,17 +27,16 @@ class StockRight extends ChartBase {
       .attr('width', width)
       .attr('height', height)
       .attr('stroke', '#d8d8d8')
-      .attr('fill', '#FFF')
+      .attr('fill', '#FFF');
     node.append('rect')
       .attr('width', 5)
       .attr('height', height)
-      .attr('fill', fill || '#128BED')
+      .attr('fill', fill || '#128BED');
     node.append('text')
       .attr('style', 'font-size:14px;fill:#128bed;')
       .attr('transform', `translate(35,25)`)
       .append('tspan')
-      .text(text || '')
-
+      .text(text || '');
     let offset = 52;
     if (_tags?.length) {
       offset = 70
@@ -98,7 +95,6 @@ class StockRight extends ChartBase {
         })
       }
     }
-
     const icon = node
       .append('g')
       .attr('class', 'plus-circle')
@@ -221,7 +217,8 @@ class StockRight extends ChartBase {
         data.children = datas.map((item, index) => format(item, {
           father: data,
           level: (data.__level || 0) + 1,
-          index
+          index,
+          fieldNames: this.fieldNames
         }));
         this.onExpand(data)
       }
@@ -267,7 +264,9 @@ class StockRight extends ChartBase {
     this.event.request = target;
   }
   render(data: IData) {
-    this.data = format(data)
+    this.data = format(data, {
+      fieldNames: this.fieldNames
+    })
     const g = this.root.append('g').attr('transform', `translate(-250,20)`)
     const lines = g.append('g').attr('class', 'lines')
     const nodes = g.append('g').attr('class', 'nodes');

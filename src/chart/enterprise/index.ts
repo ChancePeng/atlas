@@ -3,7 +3,7 @@ import format from './format';
 import { animationFrame, reverse, stackFrame } from '@/utils';
 
 import type { Position, FillData } from './types';
-import type { IData, IDesc } from '@/data';
+import type { IData, IDesc, FieldNames } from '@/data';
 import type { IEvent, SVGGSelection, SVGPathSelection, SVGTextSelection } from '../types';
 
 
@@ -18,8 +18,8 @@ class Enterprise extends ChartBase {
     right?: SVGGSelection
   }
   private map: Record<string, number>;
-  constructor(selector: string) {
-    super(selector)
+  constructor(selector: string, fieldNames?: FieldNames) {
+    super(selector, { fieldNames })
     this.event = {};
     this.data = {};
     this.canvas = {};
@@ -260,7 +260,8 @@ class Enterprise extends ChartBase {
         data.children = datas.map((item, index) => format(item, {
           father: data,
           level: (data.__level || 0) + 1,
-          index
+          index,
+          fieldNames: this.fieldNames
         }));
         this.onExpand(data, position)
       }
@@ -273,7 +274,7 @@ class Enterprise extends ChartBase {
     this.event.request = target;
   }
   render(data: IData, position: Position = 'right') {
-    const _data = format(data);
+    const _data = format(data, { fieldNames: this.fieldNames });
     this.data[position] = _data;
     const stack = [_data];
     const g = this.root.append('g')
